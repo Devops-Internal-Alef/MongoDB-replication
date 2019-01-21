@@ -1,0 +1,55 @@
+---
+- hosts: all
+  gather_facts: no
+  become: true  
+  vars:
+    docker_volume: db_data
+    docker_network: mongo-cluster
+  
+  tasks:
+    - name: "Create a Mongo DB Data Volume"
+      docker_volume:
+        name: "{{ docker_volume }}"
+
+    - name: "Create a Mongo cluster  network"
+      docker_network:
+        name: "{{ docker_network }}"
+
+    - name: "Launch Primary Mongo container"
+      docker_container:
+        name: mongo1
+        image: mongo:latest
+        detach: true
+        volumes:
+          - "{{ docker_volume }}:/data:rw"
+        networks:
+          - name: "{{ docker_network }}"
+        command: mongod --replSet my-mongo-set
+        ports:
+          - 27017:27017
+
+    - name: "Launch Secondary Mongo container"
+      docker_container:
+        name: mongo2
+        image: mongo:latest
+        detach: true
+        volumes:
+          - "{{ docker_volume }}:/data:rw"
+        networks:
+          - name: "{{ docker_network }}"
+        command: mongod --replSet my-mongo-set
+        ports:
+          - 27018:27017
+
+    - name: "Launch Arbitrar Mongo container"
+      docker_container:
+        name: mongo3
+        image: mongo:latest
+        detach: true
+        volumes:
+          - "{{ docker_volume }}:/data:rw"
+        networks:
+          - name: "{{ docker_network }}"
+        command: mongod --replSet my-mongo-set
+        ports:
+          - 27019:27017
